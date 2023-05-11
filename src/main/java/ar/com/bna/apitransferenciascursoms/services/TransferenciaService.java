@@ -1,9 +1,17 @@
 package ar.com.bna.apitransferenciascursoms.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 
+import ar.com.bna.apitransferenciascursoms.configurations.ConfigurationLoad;
 import ar.com.bna.apitransferenciascursoms.entity.Transferencia;
+import ar.com.bna.apitransferenciascursoms.exceptions.ClienteNotFoundException;
+import ar.com.bna.apitransferenciascursoms.model.ClienteResponse;
 import ar.com.bna.apitransferenciascursoms.model.TransferenciaRequest;
 import ar.com.bna.apitransferenciascursoms.model.TransferenciaResponse;
 import ar.com.bna.apitransferenciascursoms.repository.ITransferenciaRepository;
@@ -15,22 +23,54 @@ public class TransferenciaService implements ITransferenciaService{
 
     @Autowired
     private ITransferenciaRepository trasnferenciaRepository;
+
+    @Autowired
+    private ConfigurationLoad config;
+
+    @Autowired
+	private RestTemplate restTemplate;
     
     @Override
     public TransferenciaResponse Transferir(TransferenciaRequest request) {
         log.info("Inicio Servicio Transferencia para Transferir del CBU " + request.getCbuOrigen() + " al CBU " + request.getCbuDestino());
         
         Transferencia entity = new Transferencia(request);
+              
+        if (!esCliente(request.getCuilOrigen()))
+            throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilOrigen() + " en el servicio de clientes");        
+
+        if (!esCliente(request.getCuilDestino()))
+            throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilDestino() + " en el servicio de clientes");
         
-        entity.setApplied(true);
-        
+        entity.setApplied(true);    
+
         trasnferenciaRepository.save(entity);
 
         TransferenciaResponse response = new TransferenciaResponse(entity);
         
-        log.info("Fin Servicio Transferencia para Transferir con Id " + entity.getId() + " y resultado " + entity.getApplied());
+        log.info("Fin Servicio Transferencia  para Transferir OK con Id " + entity.getId() + " y resultado " + entity.getApplied());
         
         return response;
+    }
+
+    private Boolean esCliente(String cuil) {
+        try {
+
+            ResponseEntity<ClienteResponse> cliente = restTemplate.getForEntity(buildUrl(config.getApiClienteUrl(), cuil),  ClienteResponse.class);
+
+        } catch(HttpStatusCodeException e) {
+
+            if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) 
+                return false;
+            
+            throw e;
+        }
+               
+        return true;
+    }
+
+    private String buildUrl(String getUrl,String cuil){
+        return getUrl + cuil;
     }
     
 }

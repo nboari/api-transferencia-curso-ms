@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "api.config.cliente.url",
+  "type": "java.lang.String",
+  "description": "Url de la api de clientes"
+}]}

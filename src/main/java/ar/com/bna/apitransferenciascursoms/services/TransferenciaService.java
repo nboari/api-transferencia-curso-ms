@@ -25,21 +25,18 @@ public class TransferenciaService implements ITransferenciaService{
     private ITransferenciaRepository trasnferenciaRepository;
 
     @Autowired
-    private ConfigurationLoad config;
-
-    @Autowired
-	private RestTemplate restTemplate;
-    
+    private IClienteService clienteService;
+   
     @Override
     public TransferenciaResponse Transferir(TransferenciaRequest request) {
         log.info("Inicio Servicio Transferencia para Transferir del CBU " + request.getCbuOrigen() + " al CBU " + request.getCbuDestino());
         
         Transferencia entity = new Transferencia(request);
               
-        if (!esCliente(request.getCuilOrigen()))
+        if (!clienteService.esCliente(request.getCuilOrigen()))
             throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilOrigen() + " en el servicio de clientes");        
 
-        if (!esCliente(request.getCuilDestino()))
+        if (!clienteService.esCliente(request.getCuilDestino()))
             throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilDestino() + " en el servicio de clientes");
         
         entity.setApplied(true);    
@@ -52,25 +49,4 @@ public class TransferenciaService implements ITransferenciaService{
         
         return response;
     }
-
-    private Boolean esCliente(String cuil) {
-        try {
-
-            ResponseEntity<ClienteResponse> cliente = restTemplate.getForEntity(buildUrl(config.getApiClienteUrl(), cuil),  ClienteResponse.class);
-
-        } catch(HttpStatusCodeException e) {
-
-            if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) 
-                return false;
-            
-            throw e;
-        }
-               
-        return true;
-    }
-
-    private String buildUrl(String getUrl,String cuil){
-        return getUrl + cuil;
-    }
-    
 }

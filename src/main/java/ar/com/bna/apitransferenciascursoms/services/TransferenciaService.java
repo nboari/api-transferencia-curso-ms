@@ -1,17 +1,9 @@
 package ar.com.bna.apitransferenciascursoms.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
-
-import ar.com.bna.apitransferenciascursoms.configurations.ConfigurationLoad;
 import ar.com.bna.apitransferenciascursoms.entity.Transferencia;
 import ar.com.bna.apitransferenciascursoms.exceptions.ClienteNotFoundException;
-import ar.com.bna.apitransferenciascursoms.model.ClienteResponse;
 import ar.com.bna.apitransferenciascursoms.model.TransferenciaRequest;
 import ar.com.bna.apitransferenciascursoms.model.TransferenciaResponse;
 import ar.com.bna.apitransferenciascursoms.repository.ITransferenciaRepository;
@@ -34,10 +26,10 @@ public class TransferenciaService implements ITransferenciaService{
         Transferencia entity = new Transferencia(request);
               
         if (!clienteService.esCliente(request.getCuilOrigen()))
-            throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilOrigen() + " en el servicio de clientes");        
+            throw new ClienteNotFoundException("No se encontro el cliente de origen con cuil " + request.getCuilOrigen());        
 
         if (!clienteService.esCliente(request.getCuilDestino()))
-            throw new ClienteNotFoundException("No se encontro el cliente con el cuil " + request.getCuilDestino() + " en el servicio de clientes");
+            throw new ClienteNotFoundException("No se encontro el cliente de destion con cuil " + request.getCuilDestino());
         
         entity.setApplied(true);    
 

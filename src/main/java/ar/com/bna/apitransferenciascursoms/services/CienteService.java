@@ -1,8 +1,11 @@
 package ar.com.bna.apitransferenciascursoms.services;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,7 +36,7 @@ public class CienteService implements IClienteService {
 
         log.info("Entro al servicio de cliente con cuil " + cuil);
 
-        ResponseEntity<ClienteResponse> response;
+        ResponseEntity<ArrayList<ClienteResponse>> response;
 
         Cliente cache = checkCache(cuil);
 
@@ -41,7 +44,11 @@ public class CienteService implements IClienteService {
             return true;
 
         try {
-            response = restTemplate.getForEntity(buildUrl(config.getApiClienteUrl(), cuil), ClienteResponse.class);                      
+            response = restTemplate.exchange(
+                buildUrl(config.getApiClienteUrl(), cuil), 
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<ArrayList<ClienteResponse>>(){});                      
         } catch (HttpStatusCodeException e) {
 
             if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value())
@@ -50,14 +57,16 @@ public class CienteService implements IClienteService {
             throw e;
         }
 
-        clienteRepository.save(new Cliente(response.getBody().getId(),response.getBody().getCuil(),response.getBody().getNombre()));
+        ArrayList<ClienteResponse> cliente = response.getBody();
+
+        clienteRepository.save(new Cliente(cliente.get(0).getId(),cliente.get(0).getCuil(),cliente.get(0).getNombre()));
         log.info("Se recupero el cliente del servicio de clientes y se guardo en cache");
 
         return true;
     }
 
     private String buildUrl(String getUrl, String cuil) {
-        return getUrl + cuil;
+        return getUrl + "/?cuil=" +cuil;
     }
 
     private Cliente checkCache(String cuil) {

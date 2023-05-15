@@ -10,4 +10,8 @@ import lombok.Getter;
 public class ConfigurationLoad {
     @Value("${api.config.cliente.url}")
     private String apiClienteUrl;
+    @Value("${redis.server}")
+    private String redisServer;
+    @Value("${redis.port}")
+    private String redisPort;
 }

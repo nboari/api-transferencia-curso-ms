@@ -26,10 +26,10 @@ public class CienteService implements IClienteService {
     private ConfigurationLoad config;
 
     @Autowired
-	private RestTemplate restTemplate;
-    
+    private RestTemplate restTemplate;
+
     @Autowired
-	private IClienteRepository clienteRepository;
+    private IClienteRepository clienteRepository;
 
     @Override
     public Boolean esCliente(String cuil) {
@@ -45,10 +45,11 @@ public class CienteService implements IClienteService {
 
         try {
             response = restTemplate.exchange(
-                buildUrl(config.getApiClienteUrl(), cuil), 
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<ArrayList<ClienteResponse>>(){});                      
+                    buildUrl(config.getApiClienteUrl(), cuil),
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<ArrayList<ClienteResponse>>() {
+                    });
         } catch (HttpStatusCodeException e) {
 
             if (e.getStatusCode().value() == HttpStatus.NOT_FOUND.value())
@@ -59,29 +60,33 @@ public class CienteService implements IClienteService {
 
         ArrayList<ClienteResponse> cliente = response.getBody();
 
-        clienteRepository.save(new Cliente(cliente.get(0).getId(),cliente.get(0).getCuil(),cliente.get(0).getNombre()));
-        log.info("Se recupero el cliente del servicio de clientes y se guardo en cache");
+        if (cliente != null) {
+            clienteRepository
+                    .save(new Cliente(cliente.get(0).getId(), cliente.get(0).getCuil(), cliente.get(0).getNombre()));
+            log.info("Se recupero el cliente del servicio de clientes y se guardo en cache");
 
-        return true;
+            return true;
+        } else
+            return false;
     }
 
     private String buildUrl(String getUrl, String cuil) {
-        return getUrl + "/?cuil=" +cuil;
+        return getUrl + "/?cuil=" + cuil;
     }
 
     private Cliente checkCache(String cuil) {
-		try {
-			Optional<Cliente> cliente = clienteRepository.findByCuil(cuil);
-			if (cliente.isPresent()) {
+        try {
+            Optional<Cliente> cliente = clienteRepository.findByCuil(cuil);
+            if (cliente.isPresent()) {
                 log.info("Se recupero el cliente del cache");
-				return cliente.get();
-			} else {
-				return null;
-			}
-		} catch (Exception ex) {
-			log.error("Error encountered while trying to retrieve client {} check Redis Cache.  Exception {}",
-                        cuil, ex);
-			return null;
-		}
-	}
+                return cliente.get();
+            } else {
+                return null;
+            }
+        } catch (Exception ex) {
+            log.error("Error encountered while trying to retrieve client {} check Redis Cache.  Exception {}",
+                    cuil, ex);
+            return null;
+        }
+    }
 }
